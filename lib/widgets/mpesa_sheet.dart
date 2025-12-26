@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class MpesaSheet extends StatefulWidget {
   final double amount;
-  final VoidCallback onSuccess;
+  final VoidCallback onSuccess; // The function that saves to Firebase
 
   const MpesaSheet({super.key, required this.amount, required this.onSuccess});
 
@@ -12,17 +12,17 @@ class MpesaSheet extends StatefulWidget {
 
 class _MpesaSheetState extends State<MpesaSheet> {
   bool _isLoading = false;
-  final TextEditingController _phoneController = TextEditingController(text: "07");
+  final _phoneController = TextEditingController();
 
-  void _initiatePayment() async {
+  void _handlePayment() async {
     setState(() => _isLoading = true);
 
-    // 1. SIMULATE NETWORK DELAY (STK PUSH)
-    await Future.delayed(const Duration(seconds: 3));
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
-      Navigator.pop(context); // Close the sheet
-      widget.onSuccess(); // Trigger the success ticket
+      Navigator.pop(context); // 1. Close the sheet
+      widget.onSuccess();     // 2. TRIGGER THE SUCCESS SCREEN
     }
   }
 
@@ -39,68 +39,38 @@ class _MpesaSheetState extends State<MpesaSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            children: [
-              // M-PESA Logo Placeholder (Green Box)
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.money, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Lipa na M-PESA", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text("Pay KES ${widget.amount.toStringAsFixed(0)}", style: TextStyle(color: Colors.grey[600])),
-                ],
-              )
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Input
-          const Text("Enter M-PESA Number", style: TextStyle(fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
+          const Text("Confirm Payment", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Text("Pay KES ${widget.amount.toStringAsFixed(0)} via M-PESA", style: TextStyle(color: Colors.grey[600])),
+          const SizedBox(height: 20),
+          
           TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: "07XX XXX XXX",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: Colors.grey[100],
+            decoration: const InputDecoration(
+              labelText: "M-PESA Phone Number",
+              hintText: "0712 345 678",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.phone_android),
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Action Button
+          const SizedBox(height: 20),
+          
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: _isLoading ? null : _initiatePayment,
+              onPressed: _isLoading ? null : _handlePayment,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B5E20),
+                backgroundColor: const Color(0xFF4CAF50), // M-PESA Green
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text("PAY NOW", style: TextStyle(fontWeight: FontWeight.bold)),
+              child: _isLoading 
+                ? const CircularProgressIndicator(color: Colors.white) 
+                : const Text("PAY NOW", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 40),
         ],
       ),
     );

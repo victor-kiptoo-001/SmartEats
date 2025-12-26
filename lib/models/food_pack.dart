@@ -1,7 +1,8 @@
 class FoodPack {
   final String id;
   final String restaurantName;
-  final String category; // e.g., "Baked Goods", "Meals"
+  final String category;
+  final String description; // NEW FIELD
   final String imageUrl;
   final double originalPrice;
   final double price;
@@ -12,6 +13,7 @@ class FoodPack {
     required this.id,
     required this.restaurantName,
     required this.category,
+    this.description = "A surprise bag of delicious food.", // Default value if missing
     required this.imageUrl,
     required this.originalPrice,
     required this.price,
@@ -19,6 +21,9 @@ class FoodPack {
     required this.quantityLeft,
   });
 }
+
+// Keep generic dummy data just in case, though we use Firebase now.
+
 
 // DUMMY DATA (Kenyan Context - Fixed Images)
 // Note: This is NOT 'final' so we can add new items to it at runtime.

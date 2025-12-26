@@ -4,6 +4,8 @@ import 'package:latlong2/latlong.dart'; // IMPORT COORDINATES
 import '../widgets/mpesa_sheet.dart';
 import 'success_screen.dart';
 import '../models/food_pack.dart';
+import 'dart:math'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DetailScreen extends StatelessWidget {
   final FoodPack pack;
@@ -21,7 +23,7 @@ class DetailScreen extends StatelessWidget {
         children: [
           CustomScrollView(
             slivers: [
-              // 1. APP BAR (Keep existing code)
+              // 1. APP BAR
               SliverAppBar(
                 expandedHeight: 250.0,
                 pinned: true,
@@ -91,11 +93,20 @@ class DetailScreen extends StatelessWidget {
                         Text("Today, ${pack.pickupTime}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 24),
 
-                        // MAP SECTION (The Big Change)
+                        // What you get Section
+                        _buildSectionTitle(Icons.shopping_bag_outlined, "What you get"),
+                        const SizedBox(height: 8),
+                        Text(
+                          pack.description, 
+                          style: TextStyle(fontSize: 16, height: 1.5, color: Colors.grey[800]),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // MAP SECTION
                         _buildSectionTitle(Icons.location_on_outlined, "Location"),
                         const SizedBox(height: 8),
                         Container(
-                          height: 200, // Taller map
+                          height: 200, 
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
@@ -105,9 +116,9 @@ class DetailScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             child: FlutterMap(
                               options: MapOptions(
-                                initialCenter: shopLocation, // Center on Eldoret
+                                initialCenter: shopLocation, 
                                 initialZoom: 15.0,
-                                interactionOptions: const InteractionOptions(flags: InteractiveFlag.none), // Disable scrolling so page scrolls
+                                interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
                               ),
                               children: [
                                 TileLayer(
@@ -139,7 +150,7 @@ class DetailScreen extends StatelessWidget {
             ],
           ),
 
-          // 3. BUTTON
+          // 3. BOTTOM BUTTON
           Positioned(
             bottom: 20,
             left: 20,
@@ -148,6 +159,12 @@ class DetailScreen extends StatelessWidget {
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B5E20),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 5,
+                ),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -155,18 +172,36 @@ class DetailScreen extends StatelessWidget {
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (context) => MpesaSheet(
                       amount: pack.price,
-                      onSuccess: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen()));
+                      onSuccess: () async {
+                        // 1. GENERATE A RANDOM PICKUP CODE
+                        String code = "ORD-${Random().nextInt(9000) + 1000}";
+
+                        // 2. CALCULATE SAVINGS
+                        double finalOriginalPrice = pack.originalPrice > pack.price 
+                            ? pack.originalPrice 
+                            : (pack.price * 1.5); 
+
+                        // 3. SAVE TO FIREBASE
+                        await FirebaseFirestore.instance.collection('orders').add({
+                          'restaurantName': pack.restaurantName,
+                          'itemName': pack.category,
+                          'price': pack.price,
+                          'originalPrice': finalOriginalPrice,
+                          'pickupCode': code,
+                          'status': 'Active',
+                          'pickupTime': pack.pickupTime,
+                          'orderDate': FieldValue.serverTimestamp(),
+                          'userId': 'vic_demo_user',
+                        });
+
+                        // 4. NAVIGATE TO SUCCESS
+                        if (context.mounted) {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen()));
+                        }
                       },
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B5E20),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 5,
-                ),
                 child: const Text("Reserve Now", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
