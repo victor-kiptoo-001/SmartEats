@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "164267630176",
+    "project_id": "smarteats-765ae",
+    "storage_bucket": "smarteats-765ae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:164267630176:android:867be63df9673cc5062d05",
+        "android_client_info": {
+          "package_name": "com.example.smart_eats"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDewdEJB9lU7yueEh23tTSreTwXKYLb0_Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

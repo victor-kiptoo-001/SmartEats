@@ -20,8 +20,8 @@ class FoodPack {
   });
 }
 
-// DUMMY DATA (Kenyan Context)
 // DUMMY DATA (Kenyan Context - Fixed Images)
+// Note: This is NOT 'final' so we can add new items to it at runtime.
 List<FoodPack> dummyPacks = [
   FoodPack(
     id: '1',

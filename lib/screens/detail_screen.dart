@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart'; // IMPORT MAP
+import 'package:latlong2/latlong.dart'; // IMPORT COORDINATES
 import '../widgets/mpesa_sheet.dart';
 import 'success_screen.dart';
 import '../models/food_pack.dart';
@@ -10,13 +12,16 @@ class DetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ELDORET COORDINATES (Rupa's Mall area approximately)
+    final LatLng shopLocation = const LatLng(0.514277, 35.269781); 
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           CustomScrollView(
             slivers: [
-              // 1. THE FANCY SCROLLING APP BAR
+              // 1. APP BAR (Keep existing code)
               SliverAppBar(
                 expandedHeight: 250.0,
                 pinned: true,
@@ -39,7 +44,6 @@ class DetailScreen extends StatelessWidget {
                         errorBuilder: (context, error, stackTrace) =>
                             Container(color: Colors.grey),
                       ),
-                      // Gradient to make text readable
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -55,7 +59,7 @@ class DetailScreen extends StatelessWidget {
                 ),
               ),
 
-              // 2. THE CONTENT
+              // 2. CONTENT
               SliverList(
                 delegate: SliverChildListDelegate([
                   Padding(
@@ -63,91 +67,70 @@ class DetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header Info
+                        // Title & Price
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "Value Pack",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
-                              ),
-                            ),
+                            Text("Value Pack", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[800])),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8F5E9),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                "KES ${pack.price.toStringAsFixed(0)}",
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1B5E20),
-                                ),
-                              ),
+                              decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(20)),
+                              child: Text("KES ${pack.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20))),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          "Contains items worth at least KES ${pack.originalPrice.toStringAsFixed(0)}",
-                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                        ),
-                        
+                        Text("Contains items worth KES ${pack.originalPrice.toStringAsFixed(0)}", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                         const SizedBox(height: 24),
                         const Divider(),
                         const SizedBox(height: 24),
 
-                        // Pickup Time Section
+                        // Time
                         _buildSectionTitle(Icons.access_time, "Pickup time"),
                         const SizedBox(height: 8),
-                        Text(
-                          "Today, ${pack.pickupTime}",
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Please arrive on time. The shop closes immediately after.",
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-
+                        Text("Today, ${pack.pickupTime}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 24),
 
-                        // What you get Section
-                        _buildSectionTitle(Icons.shopping_bag_outlined, "What you get"),
-                        const SizedBox(height: 8),
-                        Text(
-                          "You will receive a ${pack.category}. The contents depend on what hasn't sold today, so it's a surprise! It could be bread, pastries, or savory snacks.",
-                          style: TextStyle(fontSize: 16, height: 1.5, color: Colors.grey[800]),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Location Section
+                        // MAP SECTION (The Big Change)
                         _buildSectionTitle(Icons.location_on_outlined, "Location"),
                         const SizedBox(height: 8),
                         Container(
-                          height: 150,
+                          height: 200, // Taller map
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!),
                           ),
-                          child: const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: FlutterMap(
+                              options: MapOptions(
+                                initialCenter: shopLocation, // Center on Eldoret
+                                initialZoom: 15.0,
+                                interactionOptions: const InteractionOptions(flags: InteractiveFlag.none), // Disable scrolling so page scrolls
+                              ),
                               children: [
-                                Icon(Icons.map, size: 40, color: Colors.grey),
-                                Text("Map Placeholder"),
+                                TileLayer(
+                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'com.example.smart_eats',
+                                ),
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      point: shopLocation,
+                                      width: 40,
+                                      height: 40,
+                                      child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 100), // Space for bottom button
+                        const SizedBox(height: 8),
+                        const Text("Uganda Road, Eldoret CBD", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -156,7 +139,7 @@ class DetailScreen extends StatelessWidget {
             ],
           ),
 
-          // 3. THE FLOATING BUTTON (Corrected Logic)
+          // 3. BUTTON
           Positioned(
             bottom: 20,
             left: 20,
@@ -168,18 +151,12 @@ class DetailScreen extends StatelessWidget {
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
-                    isScrollControlled: true, // Allows keyboard to push it up
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (context) => MpesaSheet(
                       amount: pack.price,
                       onSuccess: () {
-                        // Navigate to Success Ticket
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const SuccessScreen()),
-                        );
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen()));
                       },
                     ),
                   );
@@ -187,15 +164,10 @@ class DetailScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B5E20),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 5,
                 ),
-                child: const Text(
-                  "Reserve Now",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                child: const Text("Reserve Now", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -209,10 +181,7 @@ class DetailScreen extends StatelessWidget {
       children: [
         Icon(icon, color: const Color(0xFF1B5E20), size: 20),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       ],
     );
   }
