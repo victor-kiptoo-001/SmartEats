@@ -11,45 +11,43 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _currentIndex = 0;
 
-  // List of screens to switch between
-  final List<Widget> _screens = [
+  // THE 3 PAGES
+  final List<Widget> _pages = [
     const HomeScreen(),
     const OrdersScreen(),
-    const ProfileScreen(), // REPLACE THE SCAFFOLD PLACEHOLDER WITH THIS
+    const ProfileScreen(),
   ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        backgroundColor: Colors.white,
-        indicatorColor: Colors.green[100],
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront, color: Color(0xFF1B5E20)),
-            label: 'Discover',
+      body: _pages[_currentIndex], // Show the selected page
+      
+      // THE 3 BUTTONS
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        selectedItemColor: const Color(0xFF1B5E20), // Green for active
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
           ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF1B5E20)),
-            label: 'My Orders',
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: "Orders",
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: Color(0xFF1B5E20)),
-            label: 'Profile',
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: "Profile",
           ),
         ],
       ),

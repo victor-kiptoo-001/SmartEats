@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'main_screen.dart'; // Must import MainScreen
 
 class SuccessScreen extends StatelessWidget {
   const SuccessScreen({super.key});
@@ -13,7 +13,6 @@ class SuccessScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 1. ANIMATED CHECKMARK
             TweenAnimationBuilder(
               duration: const Duration(milliseconds: 800),
               tween: Tween<double>(begin: 0, end: 1),
@@ -30,8 +29,6 @@ class SuccessScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 32),
-            
-            // 2. TEXT
             const Text(
               "Order Confirmed!",
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
@@ -43,17 +40,15 @@ class SuccessScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.5),
             ),
             const Spacer(),
-
-            // 3. BUTTON
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
                 onPressed: () {
-                  // This takes you back to Home and clears the back button history
+                  // GO TO MAIN SCREEN WITH TABS
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(builder: (context) => const MainScreen()),
                     (route) => false,
                   );
                 },

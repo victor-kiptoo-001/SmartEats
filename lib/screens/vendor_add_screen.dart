@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_screen.dart';
+import 'main_screen.dart';
 
 class VendorAddScreen extends StatefulWidget {
   const VendorAddScreen({super.key});
@@ -65,9 +66,11 @@ class _VendorAddScreenState extends State<VendorAddScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Success! Posted Live.")));
+          
+          // FIX: Go to MainScreen
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
             (route) => false,
           );
         }

@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart'; // IMPORT MAP
-import 'package:latlong2/latlong.dart'; // IMPORT COORDINATES
+import 'package:flutter_map/flutter_map.dart'; // MAPS
+import 'package:latlong2/latlong.dart'; // COORDINATES
 import '../widgets/mpesa_sheet.dart';
 import 'success_screen.dart';
 import '../models/food_pack.dart';
 import 'dart:math'; 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   final FoodPack pack;
 
   const DetailScreen({super.key, required this.pack});
 
   @override
-  Widget build(BuildContext context) {
-    // ELDORET COORDINATES (Rupa's Mall area approximately)
-    final LatLng shopLocation = const LatLng(0.514277, 35.269781); 
+  State<DetailScreen> createState() => _DetailScreenState();
+}
 
+class _DetailScreenState extends State<DetailScreen> {
+  // ELDORET COORDINATES (Rupa's Mall area approximately)
+  final LatLng shopLocation = const LatLng(0.514277, 35.269781); 
+  bool _isSaving = false; // To show loading spinner on the button itself
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -30,7 +36,7 @@ class DetailScreen extends StatelessWidget {
                 backgroundColor: const Color(0xFF1B5E20),
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    pack.restaurantName,
+                    widget.pack.restaurantName,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -41,7 +47,7 @@ class DetailScreen extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       Image.network(
-                        pack.imageUrl,
+                        widget.pack.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Container(color: Colors.grey),
@@ -77,12 +83,12 @@ class DetailScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(20)),
-                              child: Text("KES ${pack.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20))),
+                              child: Text("KES ${widget.pack.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20))),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text("Contains items worth KES ${pack.originalPrice.toStringAsFixed(0)}", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                        Text("Contains items worth KES ${widget.pack.originalPrice.toStringAsFixed(0)}", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
                         const SizedBox(height: 24),
                         const Divider(),
                         const SizedBox(height: 24),
@@ -90,14 +96,14 @@ class DetailScreen extends StatelessWidget {
                         // Time
                         _buildSectionTitle(Icons.access_time, "Pickup time"),
                         const SizedBox(height: 8),
-                        Text("Today, ${pack.pickupTime}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+                        Text("Today, ${widget.pack.pickupTime}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 24),
 
-                        // What you get Section
+                        // Description
                         _buildSectionTitle(Icons.shopping_bag_outlined, "What you get"),
                         const SizedBox(height: 8),
                         Text(
-                          pack.description, 
+                          widget.pack.description, 
                           style: TextStyle(fontSize: 16, height: 1.5, color: Colors.grey[800]),
                         ),
                         const SizedBox(height: 24),
@@ -165,50 +171,81 @@ class DetailScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 5,
                 ),
-                onPressed: () {
+                // IF SAVING, DISABLE BUTTON
+                onPressed: _isSaving ? null : () {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
                     builder: (context) => MpesaSheet(
-                      amount: pack.price,
-                      onSuccess: () async {
-                        // 1. GENERATE A RANDOM PICKUP CODE
-                        String code = "ORD-${Random().nextInt(9000) + 1000}";
-
-                        // 2. CALCULATE SAVINGS
-                        double finalOriginalPrice = pack.originalPrice > pack.price 
-                            ? pack.originalPrice 
-                            : (pack.price * 1.5); 
-
-                        // 3. SAVE TO FIREBASE
-                        await FirebaseFirestore.instance.collection('orders').add({
-                          'restaurantName': pack.restaurantName,
-                          'itemName': pack.category,
-                          'price': pack.price,
-                          'originalPrice': finalOriginalPrice,
-                          'pickupCode': code,
-                          'status': 'Active',
-                          'pickupTime': pack.pickupTime,
-                          'orderDate': FieldValue.serverTimestamp(),
-                          'userId': 'vic_demo_user',
-                        });
-
-                        // 4. NAVIGATE TO SUCCESS
-                        if (context.mounted) {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen()));
-                        }
-                      },
+                      amount: widget.pack.price,
+                      onSuccess: _handleOrderCreation, // CALL SEPARATE FUNCTION
                     ),
                   );
                 },
-                child: const Text("Reserve Now", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: _isSaving 
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("Reserve Now", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  // --- SEPARATE FUNCTION TO HANDLE SAVING ---
+  void _handleOrderCreation() async {
+    // 1. Show Loading on Button
+    setState(() => _isSaving = true);
+    
+    // 2. Show Toast
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Processing Payment..."), duration: Duration(milliseconds: 1000))
+    );
+
+    try {
+      // 3. GENERATE CODE
+      String code = "ORD-${Random().nextInt(9000) + 1000}";
+
+      // 4. ENSURE SAVINGS EXIST (Math Logic Fix)
+      // If the original price is missing or weird, we FORCE it to be 1.5x so you always see savings.
+      double safeOriginalPrice = widget.pack.originalPrice;
+      if (safeOriginalPrice <= widget.pack.price) {
+        safeOriginalPrice = widget.pack.price * 1.5;
+      }
+
+      // 5. WRITE TO DB
+      await FirebaseFirestore.instance.collection('orders').add({
+        'restaurantName': widget.pack.restaurantName,
+        'itemName': widget.pack.category,
+        'price': widget.pack.price,
+        'originalPrice': safeOriginalPrice, // Uses fixed math
+        'pickupCode': code,
+        'status': 'Active',
+        'pickupTime': widget.pack.pickupTime,
+        'orderDate': FieldValue.serverTimestamp(),
+        'userId': 'vic_demo_user',
+      });
+
+      // 6. FORCE NAVIGATION
+      if (mounted) {
+        // We use pushReplacement to replace the detail screen with success
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (context) => const SuccessScreen())
+        );
+      }
+
+    } catch (e) {
+      // Handle Error
+      setState(() => _isSaving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red)
+        );
+      }
+    }
   }
 
   Widget _buildSectionTitle(IconData icon, String title) {

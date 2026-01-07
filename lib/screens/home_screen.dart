@@ -95,9 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text("Live from Cloud", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
+              child: Text("Available Nearby", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20))),
             ),
-            const SizedBox(height: 24),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text("Save these bags before they're gone", style: TextStyle(fontSize: 14, color: Colors.grey)),
+            ),
             
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
